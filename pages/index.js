@@ -7,7 +7,7 @@ import React, { useState } from "react";
 // To validate email input
 import validator from "validator";
 // To do POST request to SendInBlue API
-import fetch from "node-fetch";
+import axios from "axios";
 import Modal from "../components/Modal";
 
 // SendInBlue API endpoint
@@ -34,11 +34,14 @@ export default function Home() {
   // Error when the input is empty (default) = "Please fill out this field!"
   // Error when the input is not valid email address = "Please input a valid email address!"
   const [errorText, setErrorText] = useState("Please fill out this field!");
-  
+
   // Control type of modal that appear after submit form
   // 'success' for res.ok status code
   // 'error' for error status code
-  const [modalType, setModalType] = useState('success')
+  const [modalType, setModalType] = useState("success");
+  
+
+  const [buttonText, setButtonText] = useState('Get My Invitation')
 
   function resetField() {
     document.getElementById("email").reset();
@@ -62,6 +65,7 @@ export default function Home() {
   // Function to check wether the value that user inputted is valid or not
   // This function is trigerred when user click the "Get my Invitation" button
   function validateData() {
+    setButtonText('Loading...')
     // If the input value is empty or just white space
     if (validator.isEmpty(email, { ignore_whitespace: true })) {
       // Change text field's background color to error red
@@ -78,46 +82,45 @@ export default function Home() {
         // Store input value to the 'body' JSON
         // Any additional input in the future can be add here
         // See https://developers.sendinblue.com/reference#createcontact
-        const body = {
-          email: email,
+
+        const header = {
+          "Content-Type": "application/json",
+          "api-key": process.env.NEXT_PUBLIC_SENDINBLUE_API.toString(),
         };
 
         // Header of the POST request
-        const options = {
-          // POST method
-          method: "POST",
-          // request header
-          headers: {
-            Accept: "application/json",
-            // Type of the body input
-            "Content-Type": "application/json",
-            // The SendInBlue API v3 key.
-            // Stored in the .env file
-            // Always make sure that the ENV variable starts with NEXT_SOMETHING
-            "api-key": process.env.NEXT_PUBLIC_SENDINBLUE_API.toString(),
-          },
-
-          // Request body
-          body: JSON.stringify(body),
-        };
-
-        // Run the POST request
-        fetch(url, options)
+        axios
+          .post(
+            "https://api.sendinblue.com/v3/contacts",
+            {
+              email: email,
+            },
+            {
+              headers: {
+                "Content-Type": "application/json",
+                "api-key": process.env.NEXT_PUBLIC_SENDINBLUE_API.toString(),
+              },
+            }
+          )
           .then((res) => {
             // If the response is OK (res.status >= 200 or <= 300)
-            if (res.ok) {
+            if (res.status >= 200 && res.status < 300) {
               // Show success popups
-              setModalType('success')
-              setModalVisibility("")
+              setModalType("success");
+              setModalVisibility("");
               // If the response is not OK (res.status >= 200 or <= 300)
-            } else {
+            } else if (res.status == 400){
               // Show failed popoups
-              setModalType('error')
-              setModalVisibility("")
+              setModalType("error");
+              setModalVisibility("");
             }
           })
           // Catch and log the error
-          .catch((err) => err);
+          .catch((err) => {
+            setModalType("error")
+            setModalVisibility("")
+            console.log(err);
+          });
 
         // If the input is not aempty but not a valid email address
       } else {
@@ -133,32 +136,34 @@ export default function Home() {
   // Below is the comopnenets
   return (
     <>
-      { modalType == 'success' ? (
+      {modalType == "success" ? (
         <Modal
-          modalVisibility={ modalVisibility }
+          modalVisibility={modalVisibility}
           title="Email Added!"
           text="Thank you! You will be noticed via email for any updates in the future."
           buttonText="OK"
           buttonColor="bg-relectr-secondary-blue"
           onClick={() => {
             resetField();
+            setButtonText('Get My Invitation')
             setModalVisibility("hidden");
           }}
         />
-       ) : (
+      ) : (
         <Modal
-          modalVisibility={ modalVisibility }
-          title="Oops!c Something's Wrong!"
+          modalVisibility={modalVisibility}
+          title="Oops! Something's Wrong!"
           text="There are some problems while adding your email. Please try again."
           buttonText="Try Again"
           buttonColor="bg-relectr-red"
           onClick={() => {
             resetField();
+            setButtonText('Get My Invitation')
             setModalVisibility("hidden");
           }}
         />
-      )}  
-      
+      )}
+
       {/* Logo on Navigation bar */}
       <div className="text-center pt-8 mb-24">
         <a href="/">
@@ -203,8 +208,8 @@ export default function Home() {
             />
             <Button
               type="button"
-              text="Get My Invitation"
-              color="bg-relectr-secondary-blue"
+              text={ buttonText }
+              color='bg-relectr-secondary-blue'
               // When this button is clicked, it triggers the validateData() function
               onClick={() => {
                 validateData();

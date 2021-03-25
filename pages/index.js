@@ -7,7 +7,8 @@ import React, { useState } from "react";
 // To validate email input
 import validator from "validator";
 // To do POST request to SendInBlue API
-import fetch from 'node-fetch'
+import fetch from "node-fetch";
+import Modal from "../components/Modal";
 
 // SendInBlue API endpoint
 const url = "https://api.sendinblue.com/v3/contacts";
@@ -21,14 +22,27 @@ export default function Home() {
   // When error happens (see: validateData()), the background change to 'bg-relectr-secondary-red'
   const [background, setBackground] = useState("bg-relectr-grey");
 
-  // 'errorVIsibility is to control error message visibility, whether to be visible (the value is '')
+  // 'errorVisibility' is to control error message visibility, whether to be visible (the value is '')
   // or tobe invisible (the value is 'invisible')
   const [errorVisibility, setErrorVisibility] = useState("invisible");
+
+  // 'modalVisibility' is to control modal visibility, whether to be visible (the value is '')
+  // or tobe invisible (the value is 'hidden')
+  const [modalVisibility, setModalVisibility] = useState("hidden");
 
   // Control error messages:
   // Error when the input is empty (default) = "Please fill out this field!"
   // Error when the input is not valid email address = "Please input a valid email address!"
   const [errorText, setErrorText] = useState("Please fill out this field!");
+  
+  // Control type of modal that appear after submit form
+  // 'success' for res.ok status code
+  // 'error' for error status code
+  const [modalType, setModalType] = useState('success')
+
+  function resetField() {
+    document.getElementById("email").reset();
+  }
 
   // getData is called while typing by text field
   function getData(value) {
@@ -48,10 +62,8 @@ export default function Home() {
   // Function to check wether the value that user inputted is valid or not
   // This function is trigerred when user click the "Get my Invitation" button
   function validateData() {
-    
     // If the input value is empty or just white space
     if (validator.isEmpty(email, { ignore_whitespace: true })) {
-      
       // Change text field's background color to error red
       setBackground("bg-relectr-secondary-red");
       // Show error message (to hide = "invisible")
@@ -59,17 +71,15 @@ export default function Home() {
       // Set the error text to the following
       setErrorText("Please fill out this field!");
 
-    // If the input value is not empty
+      // If the input value is not empty
     } else {
-
       // If the input value is a valid email address
       if (validator.isEmail(email)) {
-
         // Store input value to the 'body' JSON
         // Any additional input in the future can be add here
         // See https://developers.sendinblue.com/reference#createcontact
         const body = {
-          "email": email,
+          email: email,
         };
 
         // Header of the POST request
@@ -97,15 +107,17 @@ export default function Home() {
             // If the response is OK (res.status >= 200 or <= 300)
             if (res.ok) {
               // Show success popups
-              console.log('Success');
-            // If the response is not OK (res.status >= 200 or <= 300)
+              setModalType('success')
+              setModalVisibility("")
+              // If the response is not OK (res.status >= 200 or <= 300)
             } else {
               // Show failed popoups
-              console.log('Failed');
+              setModalType('error')
+              setModalVisibility("")
             }
           })
           // Catch and log the error
-          .catch((err) => (err));
+          .catch((err) => err);
 
         // If the input is not aempty but not a valid email address
       } else {
@@ -118,14 +130,38 @@ export default function Home() {
       }
     }
   }
-
-  
   // Below is the comopnenets
   return (
     <>
+      { modalType == 'success' ? (
+        <Modal
+          modalVisibility={ modalVisibility }
+          title="Email Added!"
+          text="Thank you! You will be noticed via email for any updates in the future."
+          buttonText="OK"
+          buttonColor="bg-relectr-secondary-blue"
+          onClick={() => {
+            resetField();
+            setModalVisibility("hidden");
+          }}
+        />
+       ) : (
+        <Modal
+          modalVisibility={ modalVisibility }
+          title="Oops!c Something's Wrong!"
+          text="There are some problems while adding your email. Please try again."
+          buttonText="Try Again"
+          buttonColor="bg-relectr-red"
+          onClick={() => {
+            resetField();
+            setModalVisibility("hidden");
+          }}
+        />
+      )}  
+      
       {/* Logo on Navigation bar */}
       <div className="text-center pt-8 mb-24">
-        <a href='/'>
+        <a href="/">
           <Image src="/logo.svg" alt="relectr logo" width="115.6" height="24" />
         </a>
       </div>
@@ -155,14 +191,14 @@ export default function Home() {
       {/* Field form stuff */}
       <div className="mx-auto w-max mb-24">
         <div>
-          <form>
+          <form id="email">
             <input
               type="text"
               name="email"
-              id="email"
               placeholder="Your email"
+              autoComplete="off"
               required
-              className={`${background} px-4 pt-3 pb-2.5 mr-2 lg:w-80 xl:w-80 2xl:w-80 md:w-64 rounded outline-none`}
+              className={`${background} px-4 pt-3 pb-2.5 mr-2 lg:w-80 xl:w-80 2xl:w-80 md:w-64 rounded outline-none text-relectr-normal-text`}
               onChange={getData}
             />
             <Button
@@ -170,7 +206,9 @@ export default function Home() {
               text="Get My Invitation"
               color="bg-relectr-secondary-blue"
               // When this button is clicked, it triggers the validateData() function
-              onClick={validateData}
+              onClick={() => {
+                validateData();
+              }}
             />
           </form>
         </div>

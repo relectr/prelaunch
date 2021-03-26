@@ -6,6 +6,7 @@ dotenvLoad();
 const withNextEnv = nextEnv();
 
 module.exports = withNextEnv({
+  target: 'serverless',
   distDir: "build",
   webpack: (config, options) => {
     config.module.rules.push({ parser: { amd: false } });

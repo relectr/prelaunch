@@ -1,5 +1,4 @@
 // Necessary packages
-import Image from "next/image";
 import Button from "../components/Button";
 import Social from "../components/Social";
 import React, { useState } from "react";
@@ -9,9 +8,6 @@ import validator from "validator";
 // To do POST request to SendInBlue API
 import axios from "axios";
 import Modal from "../components/Modal";
-
-// SendInBlue API endpoint
-const url = "https://api.sendinblue.com/v3/contacts";
 
 export default function Home() {
   // Email input state. 'email' is the variable where the user's email input stored.
@@ -137,6 +133,7 @@ export default function Home() {
   return (
     <>
       {modalType == "success" ? (
+        // Success Modal
         <Modal
           modalVisibility={modalVisibility}
           title="Email Added!"
@@ -150,6 +147,7 @@ export default function Home() {
           }}
         />
       ) : (
+        // Failed Modal
         <Modal
           modalVisibility={modalVisibility}
           title="Oops! Something's Wrong!"
@@ -167,7 +165,7 @@ export default function Home() {
       {/* Logo on Navigation bar */}
       <div className="text-center pt-8 mb-24">
         <a href="/">
-          <Image src="/logo.svg" alt="relectr logo" width="115.6" height="24" />
+          <img src="/logo.svg" alt='relectr-logo' className='mx-auto' />
         </a>
       </div>
 
